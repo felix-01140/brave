@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Checklist</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --card: #161616;
+    --border: #2a2a2a;
+    --accent: #c8a96e;
+    --accent2: #7eb8a4;
+    --text: #e8e0d4;
+    --muted: #6b6560;
+    --done: #3a3a3a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('https://upload.wikimedia.org/wikipedia/en/a/a4/Flag_of_the_United_States.svg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    opacity: 0.13;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  body > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .motto {
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+    font-weight: 500;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .week-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 0.4rem;
+  }
+
+  .progress-bar-wrap {
+    max-width: 500px;
+    margin: 1.5rem auto 0;
+    background: var(--border);
+    border-radius: 100px;
+    height: 6px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 100px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .progress-label {
+    text-align: center;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+    letter-spacing: 0.1em;
+  }
+
+  .days-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 1.2rem;
+    max-width: 1100px;
+    margin: 2rem auto 0;
+  }
+
+  .day-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem;
+    transition: border-color 0.2s;
+  }
+
+  .day-card:hover { border-color: #3d3d3d; }
+
+  .day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .day-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .day-name.thursday, .day-name.friday, .day-name.saturday, .day-name.sunday {
+    color: var(--accent2);
+  }
+
+  .day-count {
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .section-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0.8rem 0 0.4rem;
+  }
+
+  .task {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s;
+    user-select: none;
+  }
+
+  .task:hover { background: rgba(255,255,255,0.03); }
+
+  .checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--muted);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .task.checked .checkbox {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .task.checked.moto .checkbox {
+    background: var(--accent2);
+    border-color: var(--accent2);
+  }
+
+  .checkbox::after {
+    content: '';
+    width: 4px;
+    height: 7px;
+    border-right: 1.5px solid #0e0e0e;
+    border-bottom: 1.5px solid #0e0e0e;
+    transform: rotate(45deg) translateY(-1px);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .task.checked .checkbox::after { opacity: 1; }
+
+  .task-text {
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text);
+    transition: color 0.2s;
+  }
+
+  .task.checked .task-text {
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--done);
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 0.5rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  .tag.special { background: rgba(200,169,110,0.15); color: var(--accent); }
+  .tag.monthly { background: rgba(255,100,100,0.1); color: #e87070; }
+
+  .reset-btn {
+    display: block;
+    margin: 2.5rem auto 0;
+    padding: 0.7rem 2rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="motto">🇺🇸 One Nation Under God ✝️</div>
+  <h1>My Week</h1>
+  <div class="week-label">Weekly Non-Negotiables</div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">0 / 0 completed</div>
+</header>
+
+<div class="days-grid" id="daysGrid"></div>
+<button class="reset-btn" onclick="resetAll()">↺ Reset Week</button>
+
+<script>
+const days = [
+  {
+    name: "Monday",
+    cls: "monday",
+    sections: [
+      { label: "Morning", tasks: ["Bible study", "Run 10 minutes"] },
+      { label: "Day", tasks: ["Study"] },
+      { label: "Evening (before sleep)", tasks: ["Business check-in — 20 min", "Revise what I learnt today"] }
+    ]
+  },
+  {
+    name: "Tuesday",
+    cls: "tuesday",
+    sections: [
+      { label: "Morning", tasks: ["Bible study", "Run 10 minutes"] },
+      { label: "Day", tasks: ["Study"] },
+      { label: "Evening (before sleep)", tasks: ["Business check-in — 20 min", "Revise what I learnt today"] }
+    ]
+  },
+  {
+    name: "Wednesday",
+    cls: "wednesday",
+    sections: [
+      { label: "Morning", tasks: ["Bible study", "Run 10 minutes"] },
+      { label: "Day", tasks: ["Study"] },
+      { label: "Evening (before sleep)", tasks: ["Business check-in — 20 min", "Revise what I learnt today"] }
+    ]
+  },
+  {
+    name: "Thursday",
+    cls: "thursday",
+    sections: [
+      { label: "Morning", tasks: ["Bible study", "Run 10 minutes"] },
+      { label: "Evening", tasks: ["Moto riding course"] },
+      { label: "Before sleep", tasks: ["Business check-in — 20 min", "Revise what I learnt today"] }
+    ]
+  },
+  {
+    name: "Friday",
+    cls: "friday",
+    sections: [
+      { label: "Morning", tasks: ["Bible study", "Run 10 minutes"] },
+      { label: "Day", tasks: ["Moto riding course"] },
+      { label: "Evening", tasks: ["Church at 7PM <span class='tag monthly'>Last Fri only</span>"] },
+      { label: "Before sleep", tasks: ["Business check-in — 20 min", "Revise what I learnt today"] }
+    ]
+  },
+  {
+    name: "Saturday",
+    cls: "saturday",
+    sections: [
+      { label: "Morning", tasks: ["Bible study", "Run 10 minutes"] },
+      { label: "Day", tasks: ["Moto riding course"] },
+      { label: "Before sleep", tasks: ["Business check-in — 20 min", "Revise what I learnt today"] }
+    ]
+  },
+  {
+    name: "Sunday",
+    cls: "sunday",
+    sections: [
+      { label: "Morning", tasks: ["Bible study", "Run 10 minutes"] },
+      { label: "Morning / Day", tasks: ["Church service", "Discipleship class"] },
+      { label: "Day", tasks: ["Moto riding course"] },
+      { label: "Before sleep", tasks: ["Business check-in — 20 min", "Revise what I learnt today"] }
+    ]
+  }
+];
+
+let state = {};
+
+function getKey(dayName, sectionLabel, taskText) {
+  return `${dayName}__${sectionLabel}__${taskText}`;
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('weeklyChecklist');
+    if (saved) state = JSON.parse(saved);
+  } catch(e) { state = {}; }
+}
+
+function saveState() {
+  try { localStorage.setItem('weeklyChecklist', JSON.stringify(state)); } catch(e) {}
+}
+
+function isMotoTask(text) {
+  return text.toLowerCase().includes('moto');
+}
+
+function buildUI() {
+  const grid = document.getElementById('daysGrid');
+  grid.innerHTML = '';
+
+  days.forEach(day => {
+    const allTasks = day.sections.flatMap(s => s.tasks);
+    const doneCount = allTasks.filter(t => state[getKey(day.name, day.sections.find(s=>s.tasks.includes(t))?.label, t)]).length;
+
+    const card = document.createElement('div');
+    card.className = 'day-card';
+
+    let html = `
+      <div class="day-header">
+        <div class="day-name ${day.cls}">${day.name}</div>
+        <div class="day-count" id="count-${day.name}">${doneCount} / ${allTasks.length}</div>
+      </div>
+    `;
+
+    day.sections.forEach(section => {
+      html += `<div class="section-label">${section.label}</div>`;
+      section.tasks.forEach(task => {
+        const key = getKey(day.name, section.label, task);
+        const checked = !!state[key];
+        const motoClass = isMotoTask(task) ? ' moto' : '';
+        html += `
+          <div class="task${checked ? ' checked' : ''}${motoClass}" data-key="${key}" onclick="toggleTask(this)">
+            <div class="checkbox"></div>
+            <div class="task-text">${task}</div>
+          </div>
+        `;
+      });
+    });
+
+    card.innerHTML = html;
+    grid.appendChild(card);
+  });
+
+  updateProgress();
+}
+
+function toggleTask(el) {
+  const key = el.dataset.key;
+  state[key] = !state[key];
+  el.classList.toggle('checked', state[key]);
+  saveState();
+  updateCounters();
+  updateProgress();
+}
+
+function updateCounters() {
+  days.forEach(day => {
+    const allTasks = day.sections.flatMap(s => s.tasks);
+    const doneCount = allTasks.filter(t => {
+      const s = day.sections.find(sec => sec.tasks.includes(t));
+      return s && !!state[getKey(day.name, s.label, t)];
+    }).length;
+    const el = document.getElementById(`count-${day.name}`);
+    if (el) el.textContent = `${doneCount} / ${allTasks.length}`;
+  });
+}
+
+function updateProgress() {
+  const allKeys = days.flatMap(day =>
+    day.sections.flatMap(s => s.tasks.map(t => getKey(day.name, s.label, t)))
+  );
+  const done = allKeys.filter(k => state[k]).length;
+  const total = allKeys.length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${done} / ${total} completed — ${pct}%`;
+}
+
+function resetAll() {
+  if (confirm('Reset all checkboxes for the week?')) {
+    state = {};
+    saveState();
+    buildUI();
+  }
+}
+
+loadState();
+buildUI();
+</script>
+</body>
+</html>
